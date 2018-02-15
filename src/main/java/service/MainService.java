@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import data.dao.TagDao;
 import data.pojo.Tag;
+
 import java.io.IOException;
 import java.util.Properties;
 import java.util.Set;
@@ -45,7 +46,9 @@ public class MainService {
         try {
             int limit = (int) props.get("controller.tag.limit");
             Set<Tag> tagSet = tagDao.getTagList(limit);
-            return mapper.writeValueAsString(tagSet);
+            synchronized (mapper) {
+                return mapper.writeValueAsString(tagSet);
+            }
         } catch (NumberFormatException e) {
             throw new NumberFormatException("значение задано не корректно");
         } catch (JsonProcessingException e) {
@@ -68,7 +71,10 @@ public class MainService {
      */
     public void updateTag(String tag) {
         try {
-            Tag tempTag = mapper.readValue(tag, Tag.class);
+            Tag tempTag;
+            synchronized (mapper) {
+                tempTag = mapper.readValue(tag, Tag.class);
+            }
             tagDao.updateTag(tempTag);
         } catch (IOException e) {
             /**
@@ -78,7 +84,7 @@ public class MainService {
         }
     }
 
-    public void updateTag(Tag tag){
+    public void updateTag(Tag tag) {
         tagDao.updateTag(tag);
     }
 
@@ -89,8 +95,9 @@ public class MainService {
     public String getTagById(String tagId) {
         try {
             Tag tagById = tagDao.getTagById(tagId);
-            String json = mapper.writeValueAsString(tagById);
-            return json;
+            synchronized (mapper) {
+                return mapper.writeValueAsString(tagById);
+            }
         } catch (JsonProcessingException e) {
             /**
              * fixme написать обертку \ обработать исключение
@@ -110,13 +117,13 @@ public class MainService {
         try {
             int limit = (int) props.get("controller.tag.limit");
             Set<Tag> tagSet = tagDao.getLimitTagsByName(limit, searchWord);
-            return mapper.writeValueAsString(tagSet);
+            synchronized (mapper) {
+                return mapper.writeValueAsString(tagSet);
+            }
         } catch (NumberFormatException e) {
             throw new NumberFormatException("значение задано не корректно");
         } catch (JsonProcessingException e) {
             throw new RuntimeException("не удалось собрать json");
         }
     }
-
-
 }
